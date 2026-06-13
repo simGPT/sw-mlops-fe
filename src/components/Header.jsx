@@ -1,7 +1,80 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+
+import { logout } from '@/api/auth';
+import useAuthStore from '@/store/authStore';
 
 export default function Header() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const setLoggedIn = useAuthStore((s) => s.setLoggedIn);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      setLoggedIn(false);
+      navigate('/login');
+    }
+  };
+
+  const renderAuthButton = () => {
+    if (pathname === '/login') {
+      return (
+        <Link
+          to="/signup"
+          className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          회원가입
+        </Link>
+      );
+    }
+
+    if (isLoggedIn) {
+      return (
+        <>
+          {pathname === '/cart' && (
+            <Link
+              to="/orders"
+              className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              주문내역
+            </Link>
+          )}
+          <button
+            onClick={handleLogout}
+            className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            로그아웃
+          </button>
+        </>
+      );
+    }
+
+    if (pathname === '/cart') {
+      return (
+        <Link
+          to="/orders"
+          className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          주문내역
+        </Link>
+      );
+    }
+
+    if (pathname !== '/orders') {
+      return (
+        <Link
+          to="/login"
+          className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
+        >
+          로그인
+        </Link>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
@@ -30,28 +103,7 @@ export default function Header() {
                 />
               </svg>
             </Link>
-            {pathname === '/login' ? (
-              <Link
-                to="/signup"
-                className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
-              >
-                회원가입
-              </Link>
-            ) : pathname === '/cart' ? (
-              <Link
-                to="/orders"
-                className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
-              >
-                주문내역
-              </Link>
-            ) : pathname !== '/orders' ? (
-              <Link
-                to="/login"
-                className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
-              >
-                로그인
-              </Link>
-            ) : null}
+            {renderAuthButton()}
           </div>
         </div>
       </div>

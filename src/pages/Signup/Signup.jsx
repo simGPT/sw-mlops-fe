@@ -1,20 +1,49 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+
+import { signup } from '@/api/auth';
 
 export default function Signup() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: '',
     email: '',
+    username: '',
     password: '',
     confirmPassword: '',
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.name || !form.email || !form.username || !form.password || !form.confirmPassword) {
+      setError('모든 항목을 입력해주세요.');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await signup({
+        name: form.name,
+        email: form.email,
+        username: form.username,
+        password: form.password,
+      });
+      navigate('/login');
+    } catch (err) {
+      setError(err.response?.data?.message || '회원가입 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,8 +88,23 @@ export default function Signup() {
           </div>
 
           <div>
+            <label htmlFor="username" className="block text-xs text-gray-500 mb-1.5">
+              아이디 <span className="text-gray-300">(4-20자)</span>
+            </label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              value={form.username}
+              onChange={handleChange}
+              placeholder="사용할 아이디를 입력하세요"
+              className="w-full border border-gray-200 rounded px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-400 transition-colors"
+            />
+          </div>
+
+          <div>
             <label htmlFor="password" className="block text-xs text-gray-500 mb-1.5">
-              비밀번호
+              비밀번호 <span className="text-gray-300">(영문·숫자·특수문자 포함, 8-20자)</span>
             </label>
             <input
               id="password"
@@ -68,7 +112,7 @@ export default function Signup() {
               type="password"
               value={form.password}
               onChange={handleChange}
-              placeholder="8자 이상 입력"
+              placeholder="비밀번호를 입력하세요"
               className="w-full border border-gray-200 rounded px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-400 transition-colors"
             />
           </div>
@@ -88,11 +132,14 @@ export default function Signup() {
             />
           </div>
 
+          {error && <p className="text-xs text-red-400">{error}</p>}
+
           <button
             type="submit"
-            className="w-full bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors mt-2"
+            disabled={loading}
+            className="w-full bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors mt-2 disabled:opacity-50"
           >
-            회원가입
+            {loading ? '처리 중...' : '회원가입'}
           </button>
         </form>
 

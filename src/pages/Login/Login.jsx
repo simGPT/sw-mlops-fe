@@ -1,18 +1,37 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+
+import { login } from '@/api/auth';
+import useAuthStore from '@/store/authStore';
 
 export default function Login() {
-  const [form, setForm] = useState({
-    email: '',
-    password: '',
-  });
+  const navigate = useNavigate();
+  const setLoggedIn = useAuthStore((s) => s.setLoggedIn);
+  const [form, setForm] = useState({ username: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.username || !form.password) {
+      setError('아이디와 비밀번호를 입력해주세요.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await login({ username: form.username, password: form.password });
+      setLoggedIn(true);
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.message || '아이디 또는 비밀번호가 올바르지 않습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,16 +46,16 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-xs text-gray-500 mb-1.5">
-              이메일
+            <label htmlFor="username" className="block text-xs text-gray-500 mb-1.5">
+              아이디
             </label>
             <input
-              id="email"
-              name="email"
-              type="email"
-              value={form.email}
+              id="username"
+              name="username"
+              type="text"
+              value={form.username}
               onChange={handleChange}
-              placeholder="example@email.com"
+              placeholder="아이디를 입력하세요"
               className="w-full border border-gray-200 rounded px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-gray-400 transition-colors"
             />
           </div>
@@ -56,11 +75,14 @@ export default function Login() {
             />
           </div>
 
+          {error && <p className="text-xs text-red-400">{error}</p>}
+
           <button
             type="submit"
-            className="w-full bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors mt-2"
+            disabled={loading}
+            className="w-full bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors mt-2 disabled:opacity-50"
           >
-            로그인
+            {loading ? '로그인 중...' : '로그인'}
           </button>
         </form>
 
