@@ -56,6 +56,8 @@ client.interceptors.response.use(
   }
 );
 
+export { client };
+
 export const login = ({ username, password }) =>
   client.post('/api/auth/login', { username, password });
 
