@@ -37,14 +37,21 @@ export default function Header() {
               >
                 회원가입
               </Link>
-            ) : (
+            ) : pathname === '/cart' ? (
+              <Link
+                to="/orders"
+                className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                주문내역
+              </Link>
+            ) : pathname !== '/orders' ? (
               <Link
                 to="/login"
                 className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
               >
                 로그인
               </Link>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
