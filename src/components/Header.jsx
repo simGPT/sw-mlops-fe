@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Header() {
+  const { pathname } = useLocation();
+
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,12 +30,21 @@ export default function Header() {
                 />
               </svg>
             </Link>
-            <Link
-              to="/login"
-              className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              로그인
-            </Link>
+            {pathname === '/login' ? (
+              <Link
+                to="/signup"
+                className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                회원가입
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="hidden md:block text-sm text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                로그인
+              </Link>
+            )}
           </div>
         </div>
       </div>
