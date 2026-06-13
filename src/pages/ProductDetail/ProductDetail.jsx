@@ -13,6 +13,7 @@ export default function ProductDetail() {
   const product = mockProduct;
 
   const [quantity, setQuantity] = useState(1);
+  const [modal, setModal] = useState(false);
 
   const decrease = () => setQuantity((q) => Math.max(1, q - 1));
   const increase = () => setQuantity((q) => Math.min(product.stock, q + 1));
@@ -106,11 +107,44 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          <button className="w-full bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors">
+          <button
+            onClick={() => setModal(true)}
+            className="w-full bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors"
+          >
             장바구니 담기
           </button>
         </div>
       </div>
+
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-lg w-full max-w-sm mx-4 p-6">
+            <h2 className="text-base font-medium text-gray-900 mb-2">장바구니 담기</h2>
+            <p className="text-sm text-gray-500 leading-relaxed mb-1">
+              <span className="text-gray-900">{product.name}</span>
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              {quantity}개 · {(product.price * quantity).toLocaleString()}원을 장바구니에
+              담으시겠습니까?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setModal(false)}
+                className="flex-1 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => setModal(false)}
+                className="flex-1 py-2.5 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                담기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
