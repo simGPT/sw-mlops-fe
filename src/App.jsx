@@ -4,6 +4,7 @@ import RootLayout from '@/layouts/RootLayout';
 import Cart from '@/pages/Cart/Cart';
 import Home from '@/pages/Home/Home';
 import Login from '@/pages/Login/Login';
+import Orders from '@/pages/Orders/Orders';
 import ProductDetail from '@/pages/ProductDetail/ProductDetail';
 import Signup from '@/pages/Signup/Signup';
 
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
           { index: true, Component: Home },
           { path: '/products/:id', Component: ProductDetail },
           { path: '/cart', Component: Cart },
+          { path: '/orders', Component: Orders },
           { path: '/login', Component: Login },
           { path: '/signup', Component: Signup },
         ],
