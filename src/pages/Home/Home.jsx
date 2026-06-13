@@ -103,10 +103,9 @@ const products = [
 
 export default function Home() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-lg font-light text-gray-900">전체 상품</h1>
-        <span className="text-sm text-gray-400">{products.length}개</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
