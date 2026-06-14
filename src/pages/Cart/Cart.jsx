@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { deleteCartItem, getCart } from '@/api/cart';
+import { deleteCartItem, getCart, updateCartItemQuantity } from '@/api/cart';
 import useAuthStore from '@/store/authStore';
 
 const DELIVERY_FEE = 3000;
@@ -26,11 +26,13 @@ export default function Cart() {
   }, [isLoggedIn, navigate]);
 
   const updateQuantity = (itemId, delta) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.itemId === itemId ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
-      )
-    );
+    const item = items.find((i) => i.itemId === itemId);
+    const newQuantity = Math.max(1, item.quantity + delta);
+    if (newQuantity === item.quantity) return;
+
+    updateCartItemQuantity(itemId, newQuantity)
+      .then((res) => setItems(res.data.data.items))
+      .catch(() => setError('수량 변경 중 오류가 발생했습니다.'));
   };
 
   const removeItem = (itemId) => {
