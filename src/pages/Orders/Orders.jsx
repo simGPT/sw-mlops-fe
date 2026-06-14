@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { getOrders } from '@/api/orders';
+import { getOrders, returnOrderItem } from '@/api/orders';
 import useAuthStore from '@/store/authStore';
 
 export default function Orders() {
@@ -27,18 +27,22 @@ export default function Orders() {
   const closeModal = () => setModal(null);
 
   const confirmReturn = () => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.orderId === modal.orderId
-          ? {
-              ...order,
-              items: order.items.map((item) =>
-                item.itemId === modal.itemId ? { ...item, returned: true } : item
-              ),
-            }
-          : order
+    returnOrderItem(modal.orderId, modal.itemId)
+      .then(() =>
+        setOrders((prev) =>
+          prev.map((order) =>
+            order.orderId === modal.orderId
+              ? {
+                  ...order,
+                  items: order.items.map((item) =>
+                    item.itemId === modal.itemId ? { ...item, returned: true } : item
+                  ),
+                }
+              : order
+          )
+        )
       )
-    );
+      .catch(() => setError('반품 처리 중 오류가 발생했습니다.'));
     closeModal();
   };
 

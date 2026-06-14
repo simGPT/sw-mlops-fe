@@ -36,7 +36,7 @@ export default function ProductDetail() {
     setCartError('');
     try {
       await addToCart({ productId: product.id, quantity });
-      setModal(false);
+      setModal('success');
     } catch {
       setCartError('장바구니 담기에 실패했습니다.');
     } finally {
@@ -142,7 +142,7 @@ export default function ProductDetail() {
           </div>
 
           <button
-            onClick={() => setModal(true)}
+            onClick={() => setModal('confirm')}
             className="w-full bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors"
           >
             장바구니 담기
@@ -154,7 +154,28 @@ export default function ProductDetail() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setModal(false)} />
           <div className="relative bg-white rounded-2xl shadow-lg w-full max-w-sm mx-4 p-6">
-            {isLoggedIn ? (
+            {modal === 'success' ? (
+              <>
+                <h2 className="text-base font-medium text-gray-900 mb-2">장바구니에 담았습니다</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  계속 쇼핑하시겠습니까, 아니면 장바구니로 이동하시겠습니까?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigate('/')}
+                    className="flex-1 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors"
+                  >
+                    계속 쇼핑
+                  </button>
+                  <button
+                    onClick={() => navigate('/cart')}
+                    className="flex-1 py-2.5 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    장바구니로 이동
+                  </button>
+                </div>
+              </>
+            ) : isLoggedIn ? (
               <>
                 <h2 className="text-base font-medium text-gray-900 mb-2">장바구니 담기</h2>
                 <p className="text-sm text-gray-500 leading-relaxed mb-1">
