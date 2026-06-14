@@ -1,3 +1,6 @@
 import { client } from '@/api/auth';
 
 export const getCart = () => client.get('/api/cart');
+
+export const addToCart = ({ productId, quantity }) =>
+  client.post('/api/cart/items', { productId, quantity });

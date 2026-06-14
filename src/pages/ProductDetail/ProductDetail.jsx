@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { addToCart } from '@/api/cart';
 import { createViewLog, getProductById } from '@/api/products';
 import useAuthStore from '@/store/authStore';
 
@@ -13,6 +14,8 @@ export default function ProductDetail() {
   const [error, setError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [modal, setModal] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [cartError, setCartError] = useState('');
 
   useEffect(() => {
     getProductById(id)
@@ -27,6 +30,19 @@ export default function ProductDetail() {
 
   const decrease = () => setQuantity((q) => Math.max(1, q - 1));
   const increase = () => setQuantity((q) => Math.min(product.stock, q + 1));
+
+  const handleAddToCart = async () => {
+    setCartLoading(true);
+    setCartError('');
+    try {
+      await addToCart({ productId: product.id, quantity });
+      setModal(false);
+    } catch {
+      setCartError('장바구니 담기에 실패했습니다.');
+    } finally {
+      setCartLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -148,18 +164,21 @@ export default function ProductDetail() {
                   {quantity}개 · {(product.price * quantity).toLocaleString()}원을 장바구니에
                   담으시겠습니까?
                 </p>
+                {cartError && <p className="text-xs text-red-400 mb-3">{cartError}</p>}
                 <div className="flex gap-2">
                   <button
                     onClick={() => setModal(false)}
-                    className="flex-1 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors"
+                    disabled={cartLoading}
+                    className="flex-1 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors disabled:opacity-50"
                   >
                     취소
                   </button>
                   <button
-                    onClick={() => setModal(false)}
-                    className="flex-1 py-2.5 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors"
+                    onClick={handleAddToCart}
+                    disabled={cartLoading}
+                    className="flex-1 py-2.5 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
                   >
-                    담기
+                    {cartLoading ? '담는 중...' : '담기'}
                   </button>
                 </div>
               </>
