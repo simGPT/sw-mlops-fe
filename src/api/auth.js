@@ -3,7 +3,7 @@ import axios from 'axios';
 import useAuthStore from '@/store/authStore';
 
 const client = axios.create({
-  baseURL: 'https://api.swmlops.site',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
 });
 
