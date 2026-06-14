@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { getCart } from '@/api/cart';
+import { deleteCartItem, getCart } from '@/api/cart';
 import useAuthStore from '@/store/authStore';
 
 const DELIVERY_FEE = 3000;
@@ -34,7 +34,9 @@ export default function Cart() {
   };
 
   const removeItem = (itemId) => {
-    setItems((prev) => prev.filter((item) => item.itemId !== itemId));
+    deleteCartItem(itemId)
+      .then((res) => setItems(res.data.data.items))
+      .catch(() => setError('삭제 중 오류가 발생했습니다.'));
   };
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
