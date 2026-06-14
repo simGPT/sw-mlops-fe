@@ -92,31 +92,24 @@ export default function Orders() {
             <div className="px-5 py-4 space-y-4">
               {order.items.map((item) => (
                 <div key={item.itemId} className="flex items-center gap-3">
-                  <Link to={`/products/${item.productId}`} className="shrink-0">
-                    <div className="w-14 h-14 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center">
-                      <svg
-                        className="w-6 h-6 text-gray-200"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1}
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-                        />
-                      </svg>
-                    </div>
-                  </Link>
+                  <div className="shrink-0 w-14 h-14 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center">
+                    <svg
+                      className="w-6 h-6 text-gray-200"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1}
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+                      />
+                    </svg>
+                  </div>
 
                   <div className="flex-1 min-w-0">
-                    <Link
-                      to={`/products/${item.productId}`}
-                      className="text-sm text-gray-900 hover:underline truncate block"
-                    >
-                      {item.productName}
-                    </Link>
+                    <p className="text-sm text-gray-900 truncate">{item.productName}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {item.price.toLocaleString()}원 · {item.quantity}개
                     </p>
