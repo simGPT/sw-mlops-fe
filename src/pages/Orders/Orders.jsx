@@ -1,73 +1,29 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const initialOrders = [
-  {
-    orderId: '6d8caae5-7ba0-4fdb-bebc-c0cbeeca1a2e',
-    createdAt: '2026-06-13T17:50:44.028904',
-    totalPrice: 12000,
-    discountAmount: 0,
-    items: [
-      {
-        itemId: 1,
-        productId: 'c2c09e7c-04e3-423e-9e66-033f7406f553',
-        productName: '에뛰드 루키루키 립스틱 #RD302',
-        price: 12000,
-        quantity: 1,
-        returned: false,
-      },
-    ],
-  },
-  {
-    orderId: 'a1b2c3d4-0000-1111-2222-333344445555',
-    createdAt: '2026-06-10T10:20:00.000000',
-    totalPrice: 55000,
-    discountAmount: 5000,
-    items: [
-      {
-        itemId: 2,
-        productId: '50261540-0a3c-4992-a62c-8aa857d34d47',
-        productName: '맥 립스틱 #레트로',
-        price: 38000,
-        quantity: 1,
-        returned: true,
-      },
-      {
-        itemId: 3,
-        productId: '16ac79a6-b57e-49f1-965e-45dfee572d86',
-        productName: '라네즈 립 슬리핑 마스크',
-        price: 17000,
-        quantity: 1,
-        returned: false,
-      },
-    ],
-  },
-  {
-    orderId: 'f9e8d7c6-aaaa-bbbb-cccc-ddddeeee1234',
-    createdAt: '2026-06-01T09:00:00.000000',
-    totalPrice: 68000,
-    discountAmount: 0,
-    items: [
-      {
-        itemId: 4,
-        productId: '1432c69c-9da9-4593-a202-435c95674f26',
-        productName: '나스 아이섀도 팔레트 #언더그라운드',
-        price: 68000,
-        quantity: 1,
-        returned: true,
-      },
-    ],
-  },
-];
+import { getOrders } from '@/api/orders';
+import useAuthStore from '@/store/authStore';
 
 export default function Orders() {
-  const [orders, setOrders] = useState(initialOrders);
+  const navigate = useNavigate();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [modal, setModal] = useState(null);
 
-  const openModal = (orderId, itemId, productName) => {
-    setModal({ orderId, itemId, productName });
-  };
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    getOrders()
+      .then((res) => setOrders(res.data.data))
+      .catch(() => setError('주문 내역을 불러오지 못했습니다.'))
+      .finally(() => setLoading(false));
+  }, [isLoggedIn, navigate]);
 
+  const openModal = (orderId, itemId, productName) => setModal({ orderId, itemId, productName });
   const closeModal = () => setModal(null);
 
   const confirmReturn = () => {
@@ -85,6 +41,22 @@ export default function Orders() {
     );
     closeModal();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <p className="text-sm text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   if (orders.length === 0) {
     return (
