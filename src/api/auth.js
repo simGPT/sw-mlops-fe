@@ -22,9 +22,11 @@ client.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    const status = error.response?.status;
     if (
-      error.response?.status === 401 &&
+      (status === 401 || status === 403) &&
       !originalRequest._retry &&
+      !originalRequest._skipRetry &&
       !AUTH_ROUTES.includes(originalRequest.url)
     ) {
       if (isRefreshing) {
