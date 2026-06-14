@@ -1,14 +1,18 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export default function ProductCard({ product }) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <Link to={`/products/${product.id}`} className="group">
       <div className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-200">
         <div className="aspect-square bg-gray-50 overflow-hidden">
-          {product.imageUrl ? (
+          {product.imageUrl && !imgError ? (
             <img
               src={product.imageUrl}
               alt={product.name}
+              onError={() => setImgError(true)}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (

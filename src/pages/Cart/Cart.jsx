@@ -113,7 +113,19 @@ export default function Cart() {
             <div key={item.itemId} className="flex gap-6 pt-2 pb-6 border-b border-gray-100">
               <Link to={`/products/${item.productId}`} className="shrink-0">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
+                  {item.imageUrl && (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.productName}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling.style.display = 'block';
+                      }}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                   <svg
+                    style={{ display: item.imageUrl ? 'none' : 'block' }}
                     className="w-8 h-8 text-gray-200"
                     fill="none"
                     viewBox="0 0 24 24"

@@ -35,7 +35,7 @@ export default function Orders() {
               ? {
                   ...order,
                   items: order.items.map((item) =>
-                    item.itemId === modal.itemId ? { ...item, returned: true } : item
+                    item.itemId === modal.itemId ? { ...item, isReturned: true } : item
                   ),
                 }
               : order
@@ -96,8 +96,20 @@ export default function Orders() {
             <div className="px-5 py-4 space-y-4">
               {order.items.map((item) => (
                 <div key={item.itemId} className="flex items-center gap-3">
-                  <div className="shrink-0 w-14 h-14 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center">
+                  <div className="shrink-0 w-14 h-14 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden flex items-center justify-center">
+                    {item.imageUrl && (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.productName}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling.style.display = 'block';
+                        }}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                     <svg
+                      style={{ display: item.imageUrl ? 'none' : 'block' }}
                       className="w-6 h-6 text-gray-200"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -119,7 +131,7 @@ export default function Orders() {
                     </p>
                   </div>
 
-                  {item.returned ? (
+                  {item.isReturned ? (
                     <span className="shrink-0 text-xs text-gray-300">반품완료</span>
                   ) : (
                     <button

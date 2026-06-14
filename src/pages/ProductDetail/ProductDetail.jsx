@@ -16,6 +16,7 @@ export default function ProductDetail() {
   const [modal, setModal] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
   const [cartError, setCartError] = useState('');
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     getProductById(id)
@@ -64,8 +65,13 @@ export default function ProductDetail() {
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-center max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
         <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center">
-          {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+          {product.imageUrl && !imgError ? (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <svg
               className="w-20 h-20 text-gray-200"
