@@ -17,11 +17,11 @@
 - 🔥 **Remove:** 파일을 삭제하는 작업만 수행한 경우 [:fire:]
 - ⏪️ **Revert:** 전 버전으로 롤백 [:rewind:]
 
-**🪴 Branch Convention (GitHub Flow)**
+## 🌲 Branch Convention
 
-- `main`: 배포 가능한 브랜치, 항상 배포 가능한 상태를 유지
-- `develop`: 개발 완료된 기능들이 모이는 브랜치
-- `feature/{description}`: 새로운 기능을 개발하는 브랜치
-    - 예: `feature/social-login`
-- `infra/{description}`: 인프라 및 배포 환경 구성을 위한 브랜치
-    - 예: `infra/dockerize`, `infra/k8s-deploy`
+- **`main`**: 배포 가능한 브랜치, 항상 배포 가능한 상태를 유지
+- **`develop`**: 다음 버전을 위한 개발 브랜치, 팀원들의 작업 결과물이 모이는 '중심점'
+- **`ui/#이슈번호/명칭`**: 화면 UI 구현이나 스타일링 작업을 할 때 사용
+  - _예: `ui/#12/login-form`_
+- **`api/#이슈번호/명칭`**: 데이터 통신, API 연동, 비즈니스 로직 구현 시 사용
+  - _예: `api/#45/fetch-user-profile`_
