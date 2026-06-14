@@ -1,33 +1,67 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
-const mockProduct = {
-  id: '16ac79a6-b57e-49f1-965e-45dfee572d86',
-  imageUrl: null,
-  name: '라네즈 립 슬리핑 마스크',
-  price: 17000,
-  stock: 200,
-};
+import { addToCart } from '@/api/cart';
+import { createViewLog, getProductById } from '@/api/products';
+import useAuthStore from '@/store/authStore';
 
 export default function ProductDetail() {
-  const product = mockProduct;
-
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [modal, setModal] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [cartError, setCartError] = useState('');
+
+  useEffect(() => {
+    getProductById(id)
+      .then((res) => setProduct(res.data.data))
+      .catch(() => setError('상품 정보를 불러오지 못했습니다.'))
+      .finally(() => setLoading(false));
+
+    if (isLoggedIn) {
+      createViewLog(id).catch(() => {});
+    }
+  }, [id, isLoggedIn]);
 
   const decrease = () => setQuantity((q) => Math.max(1, q - 1));
   const increase = () => setQuantity((q) => Math.min(product.stock, q + 1));
 
+  const handleAddToCart = async () => {
+    setCartLoading(true);
+    setCartError('');
+    try {
+      await addToCart({ productId: product.id, quantity });
+      setModal('success');
+    } catch {
+      setCartError('장바구니 담기에 실패했습니다.');
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <p className="text-sm text-red-400">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col justify-center max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      {/* <nav className="flex items-center gap-2 text-sm text-gray-400 mb-8">
-        <Link to="/" className="hover:text-gray-900 transition-colors">
-          전체 상품
-        </Link>
-        <span>/</span>
-        <span className="text-gray-900">{product.name}</span>
-      </nav> */}
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
         <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center">
           {product.imageUrl ? (
@@ -108,7 +142,7 @@ export default function ProductDetail() {
           </div>
 
           <button
-            onClick={() => setModal(true)}
+            onClick={() => setModal('confirm')}
             className="w-full bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors"
           >
             장바구니 담기
@@ -120,28 +154,77 @@ export default function ProductDetail() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setModal(false)} />
           <div className="relative bg-white rounded-2xl shadow-lg w-full max-w-sm mx-4 p-6">
-            <h2 className="text-base font-medium text-gray-900 mb-2">장바구니 담기</h2>
-            <p className="text-sm text-gray-500 leading-relaxed mb-1">
-              <span className="text-gray-900">{product.name}</span>
-            </p>
-            <p className="text-sm text-gray-500 mb-6">
-              {quantity}개 · {(product.price * quantity).toLocaleString()}원을 장바구니에
-              담으시겠습니까?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setModal(false)}
-                className="flex-1 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={() => setModal(false)}
-                className="flex-1 py-2.5 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                담기
-              </button>
-            </div>
+            {modal === 'success' ? (
+              <>
+                <h2 className="text-base font-medium text-gray-900 mb-2">장바구니에 담았습니다</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  계속 쇼핑하시겠습니까, 아니면 장바구니로 이동하시겠습니까?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigate('/')}
+                    className="flex-1 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors"
+                  >
+                    계속 쇼핑
+                  </button>
+                  <button
+                    onClick={() => navigate('/cart')}
+                    className="flex-1 py-2.5 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    장바구니로 이동
+                  </button>
+                </div>
+              </>
+            ) : isLoggedIn ? (
+              <>
+                <h2 className="text-base font-medium text-gray-900 mb-2">장바구니 담기</h2>
+                <p className="text-sm text-gray-500 leading-relaxed mb-1">
+                  <span className="text-gray-900">{product.name}</span>
+                </p>
+                <p className="text-sm text-gray-500 mb-6">
+                  {quantity}개 · {(product.price * quantity).toLocaleString()}원을 장바구니에
+                  담으시겠습니까?
+                </p>
+                {cartError && <p className="text-xs text-red-400 mb-3">{cartError}</p>}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setModal(false)}
+                    disabled={cartLoading}
+                    className="flex-1 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors disabled:opacity-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={cartLoading}
+                    className="flex-1 py-2.5 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
+                  >
+                    {cartLoading ? '담는 중...' : '담기'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-base font-medium text-gray-900 mb-2">로그인이 필요합니다</h2>
+                <p className="text-sm text-gray-500 mb-6">
+                  장바구니 이용을 위해 로그인 후 이용 바랍니다.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setModal(false)}
+                    className="flex-1 py-2.5 text-sm text-gray-500 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="flex-1 py-2.5 text-sm text-white bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    로그인
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

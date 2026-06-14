@@ -1,62 +1,80 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const initialItems = [
-  {
-    cartItemId: 'cart-1',
-    product: {
-      id: '16ac79a6-b57e-49f1-965e-45dfee572d86',
-      imageUrl: null,
-      name: '라네즈 립 슬리핑 마스크',
-      price: 17000,
-    },
-    quantity: 2,
-  },
-  {
-    cartItemId: 'cart-2',
-    product: {
-      id: '50261540-0a3c-4992-a62c-8aa857d34d47',
-      imageUrl: null,
-      name: '맥 립스틱 #레트로',
-      price: 38000,
-    },
-    quantity: 1,
-  },
-  {
-    cartItemId: 'cart-3',
-    product: {
-      id: '1432c69c-9da9-4593-a202-435c95674f26',
-      imageUrl: null,
-      name: '나스 아이섀도 팔레트 #언더그라운드',
-      price: 68000,
-    },
-    quantity: 1,
-  },
-];
+import { deleteCartItem, getCart, updateCartItemQuantity } from '@/api/cart';
+import { createOrder } from '@/api/orders';
+import useAuthStore from '@/store/authStore';
 
 const DELIVERY_FEE = 3000;
 const FREE_DELIVERY_THRESHOLD = 50000;
 
 export default function Cart() {
-  const [items, setItems] = useState(initialItems);
+  const navigate = useNavigate();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const updateQuantity = (cartItemId, delta) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.cartItemId === cartItemId
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
-    );
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    getCart()
+      .then((res) => setItems(res.data.data.items))
+      .catch(() => setError('장바구니를 불러오지 못했습니다.'))
+      .finally(() => setLoading(false));
+  }, [isLoggedIn, navigate]);
+
+  const updateQuantity = (itemId, delta) => {
+    const item = items.find((i) => i.itemId === itemId);
+    const newQuantity = Math.max(1, item.quantity + delta);
+    if (newQuantity === item.quantity) return;
+
+    updateCartItemQuantity(itemId, newQuantity)
+      .then((res) => setItems(res.data.data.items))
+      .catch(() => setError('수량 변경 중 오류가 발생했습니다.'));
   };
 
-  const removeItem = (cartItemId) => {
-    setItems((prev) => prev.filter((item) => item.cartItemId !== cartItemId));
+  const removeItem = (itemId) => {
+    deleteCartItem(itemId)
+      .then((res) => setItems(res.data.data.items))
+      .catch(() => setError('삭제 중 오류가 발생했습니다.'));
   };
 
-  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const [orderLoading, setOrderLoading] = useState(false);
+
+  const handleOrder = async () => {
+    setOrderLoading(true);
+    try {
+      await createOrder(items.map(({ productId, quantity }) => ({ productId, quantity })));
+      navigate('/orders');
+    } catch {
+      setError('주문 중 오류가 발생했습니다.');
+    } finally {
+      setOrderLoading(false);
+    }
+  };
+
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
   const total = subtotal + deliveryFee;
+
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <p className="text-sm text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -92,48 +110,38 @@ export default function Cart() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <div key={item.cartItemId} className="flex gap-6 pt-2 pb-6 border-b border-gray-100">
-              <Link to={`/products/${item.product.id}`} className="shrink-0">
+            <div key={item.itemId} className="flex gap-6 pt-2 pb-6 border-b border-gray-100">
+              <Link to={`/products/${item.productId}`} className="shrink-0">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
-                  {item.product.imageUrl ? (
-                    <img
-                      src={item.product.imageUrl}
-                      alt={item.product.name}
-                      className="w-full h-full object-cover"
+                  <svg
+                    className="w-8 h-8 text-gray-200"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
                     />
-                  ) : (
-                    <svg
-                      className="w-8 h-8 text-gray-200"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1}
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-                      />
-                    </svg>
-                  )}
+                  </svg>
                 </div>
               </Link>
 
               <div className="flex-1 min-w-0">
                 <Link
-                  to={`/products/${item.product.id}`}
+                  to={`/products/${item.productId}`}
                   className="text-sm text-gray-900 hover:underline line-clamp-1"
                 >
-                  {item.product.name}
+                  {item.productName}
                 </Link>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {item.product.price.toLocaleString()}원
-                </p>
+                <p className="text-sm text-gray-500 mt-0.5">{item.price.toLocaleString()}원</p>
 
                 <div className="flex items-center mt-3">
                   <div className="flex items-center border border-gray-200 rounded">
                     <button
-                      onClick={() => updateQuantity(item.cartItemId, -1)}
+                      onClick={() => updateQuantity(item.itemId, -1)}
                       className="px-2.5 py-1.5 text-gray-400 hover:text-gray-900 transition-colors"
                     >
                       <svg
@@ -150,7 +158,7 @@ export default function Cart() {
                       {item.quantity}
                     </span>
                     <button
-                      onClick={() => updateQuantity(item.cartItemId, 1)}
+                      onClick={() => updateQuantity(item.itemId, 1)}
                       className="px-2.5 py-1.5 text-gray-400 hover:text-gray-900 transition-colors"
                     >
                       <svg
@@ -173,10 +181,10 @@ export default function Cart() {
 
               <div className="shrink-0 flex flex-col items-end justify-between">
                 <p className="text-sm font-medium text-gray-900">
-                  {(item.product.price * item.quantity).toLocaleString()}원
+                  {(item.price * item.quantity).toLocaleString()}원
                 </p>
                 <button
-                  onClick={() => removeItem(item.cartItemId)}
+                  onClick={() => removeItem(item.itemId)}
                   className="text-gray-300 hover:text-red-400 transition-colors"
                 >
                   <svg
@@ -202,7 +210,7 @@ export default function Cart() {
           <div className="bg-gray-50 rounded-xl p-6 sticky top-24">
             <h2 className="text-sm font-medium text-gray-900 mb-5">주문 요약</h2>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between text-gray-500 ">
+              <div className="flex justify-between text-gray-500">
                 <span>상품 금액</span>
                 <span>{subtotal.toLocaleString()}원</span>
               </div>
@@ -220,8 +228,12 @@ export default function Cart() {
                 <span>{total.toLocaleString()}원</span>
               </div>
             </div>
-            <button className="w-full mt-5 bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors">
-              주문하기
+            <button
+              onClick={handleOrder}
+              disabled={orderLoading}
+              className="w-full mt-5 bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              {orderLoading ? '주문 중...' : '주문하기'}
             </button>
           </div>
         </div>

@@ -1,90 +1,66 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const initialOrders = [
-  {
-    orderId: '6d8caae5-7ba0-4fdb-bebc-c0cbeeca1a2e',
-    createdAt: '2026-06-13T17:50:44.028904',
-    totalPrice: 12000,
-    discountAmount: 0,
-    items: [
-      {
-        itemId: 1,
-        productId: 'c2c09e7c-04e3-423e-9e66-033f7406f553',
-        productName: '에뛰드 루키루키 립스틱 #RD302',
-        price: 12000,
-        quantity: 1,
-        returned: false,
-      },
-    ],
-  },
-  {
-    orderId: 'a1b2c3d4-0000-1111-2222-333344445555',
-    createdAt: '2026-06-10T10:20:00.000000',
-    totalPrice: 55000,
-    discountAmount: 5000,
-    items: [
-      {
-        itemId: 2,
-        productId: '50261540-0a3c-4992-a62c-8aa857d34d47',
-        productName: '맥 립스틱 #레트로',
-        price: 38000,
-        quantity: 1,
-        returned: true,
-      },
-      {
-        itemId: 3,
-        productId: '16ac79a6-b57e-49f1-965e-45dfee572d86',
-        productName: '라네즈 립 슬리핑 마스크',
-        price: 17000,
-        quantity: 1,
-        returned: false,
-      },
-    ],
-  },
-  {
-    orderId: 'f9e8d7c6-aaaa-bbbb-cccc-ddddeeee1234',
-    createdAt: '2026-06-01T09:00:00.000000',
-    totalPrice: 68000,
-    discountAmount: 0,
-    items: [
-      {
-        itemId: 4,
-        productId: '1432c69c-9da9-4593-a202-435c95674f26',
-        productName: '나스 아이섀도 팔레트 #언더그라운드',
-        price: 68000,
-        quantity: 1,
-        returned: true,
-      },
-    ],
-  },
-];
+import { getOrders, returnOrderItem } from '@/api/orders';
+import useAuthStore from '@/store/authStore';
 
 export default function Orders() {
-  const [orders, setOrders] = useState(initialOrders);
+  const navigate = useNavigate();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [modal, setModal] = useState(null);
 
-  const openModal = (orderId, itemId, productName) => {
-    setModal({ orderId, itemId, productName });
-  };
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    getOrders()
+      .then((res) => setOrders(res.data.data))
+      .catch(() => setError('주문 내역을 불러오지 못했습니다.'))
+      .finally(() => setLoading(false));
+  }, [isLoggedIn, navigate]);
 
+  const openModal = (orderId, itemId, productName) => setModal({ orderId, itemId, productName });
   const closeModal = () => setModal(null);
 
   const confirmReturn = () => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.orderId === modal.orderId
-          ? {
-              ...order,
-              items: order.items.map((item) =>
-                item.itemId === modal.itemId ? { ...item, returned: true } : item
-              ),
-            }
-          : order
+    returnOrderItem(modal.orderId, modal.itemId)
+      .then(() =>
+        setOrders((prev) =>
+          prev.map((order) =>
+            order.orderId === modal.orderId
+              ? {
+                  ...order,
+                  items: order.items.map((item) =>
+                    item.itemId === modal.itemId ? { ...item, returned: true } : item
+                  ),
+                }
+              : order
+          )
+        )
       )
-    );
+      .catch(() => setError('반품 처리 중 오류가 발생했습니다.'));
     closeModal();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <p className="text-sm text-red-400">{error}</p>
+      </div>
+    );
+  }
 
   if (orders.length === 0) {
     return (
@@ -120,31 +96,24 @@ export default function Orders() {
             <div className="px-5 py-4 space-y-4">
               {order.items.map((item) => (
                 <div key={item.itemId} className="flex items-center gap-3">
-                  <Link to={`/products/${item.productId}`} className="shrink-0">
-                    <div className="w-14 h-14 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center">
-                      <svg
-                        className="w-6 h-6 text-gray-200"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1}
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-                        />
-                      </svg>
-                    </div>
-                  </Link>
+                  <div className="shrink-0 w-14 h-14 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center">
+                    <svg
+                      className="w-6 h-6 text-gray-200"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1}
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+                      />
+                    </svg>
+                  </div>
 
                   <div className="flex-1 min-w-0">
-                    <Link
-                      to={`/products/${item.productId}`}
-                      className="text-sm text-gray-900 hover:underline truncate block"
-                    >
-                      {item.productName}
-                    </Link>
+                    <p className="text-sm text-gray-900 truncate">{item.productName}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {item.price.toLocaleString()}원 · {item.quantity}개
                     </p>
