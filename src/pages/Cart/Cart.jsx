@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { deleteCartItem, getCart, updateCartItemQuantity } from '@/api/cart';
+import { createOrder } from '@/api/orders';
 import useAuthStore from '@/store/authStore';
 
 const DELIVERY_FEE = 3000;
@@ -39,6 +40,20 @@ export default function Cart() {
     deleteCartItem(itemId)
       .then((res) => setItems(res.data.data.items))
       .catch(() => setError('삭제 중 오류가 발생했습니다.'));
+  };
+
+  const [orderLoading, setOrderLoading] = useState(false);
+
+  const handleOrder = async () => {
+    setOrderLoading(true);
+    try {
+      await createOrder(items.map(({ productId, quantity }) => ({ productId, quantity })));
+      navigate('/orders');
+    } catch {
+      setError('주문 중 오류가 발생했습니다.');
+    } finally {
+      setOrderLoading(false);
+    }
   };
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -213,8 +228,12 @@ export default function Cart() {
                 <span>{total.toLocaleString()}원</span>
               </div>
             </div>
-            <button className="w-full mt-5 bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors">
-              주문하기
+            <button
+              onClick={handleOrder}
+              disabled={orderLoading}
+              className="w-full mt-5 bg-gray-900 text-white py-3.5 text-sm font-medium rounded hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              {orderLoading ? '주문 중...' : '주문하기'}
             </button>
           </div>
         </div>
